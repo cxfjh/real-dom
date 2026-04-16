@@ -60,7 +60,7 @@ export const addScopeToDOM = (element: HTMLElement | DocumentFragment, scopedId:
  * @param start - 起始位置
  * @returns 匹配的闭合大括号索引，未找到返回 -1
  */
-function findMatchingBrace(str: string, start: number): number {
+const findMatchingBrace = (str: string, start: number): number => {
     let braceCount = 0;
     let inString = false;
     let stringChar = "";
@@ -81,7 +81,7 @@ function findMatchingBrace(str: string, start: number): number {
     }
 
     return -1;
-}
+};
 
 /**
  * 处理 @规则中的作用域（递归处理嵌套规则）

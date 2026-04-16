@@ -15,36 +15,46 @@
 ### 2. 基础示例
 
 ```html
-<body r-app>
-   <!-- 响应式计数示例 -->
-   <h1>{{ count }}</h1>
+<h1>基础响应式</h1>
+<p>{{ text }}</p>
+<p>{{ textArr.region }}</p>
+<p>({{ num1 }} + 2) × {{ num2 }} = {{ (num1.value + 2) * num2.value }}</p>
+<p>当前 num2 = {{ num2 }}</p>
 
-   <!-- 事件绑定示例 -->
-   <button r-click="count.value++">增加</button>
-   <button r-click="count.value--">减少</button>
+<label>
+   num1 = {{ num1 }}
+   <input type="number" r-model="num1" r-click="console.log(num1.value)" keydown="enter">
+   num1 = {{ num1 }}
+</label>
 
-   <!-- 双向绑定 -->
-   <input type="text" r-model="name" placeholder="输入名字">
-   <p>你好，{{ name }}!</p>
+<div>
+   <button r-click="num2.value++">num2 + 1</button>
+   <button r-click="num2.value--; console.log(num2.value)" dblclick>双击 num2 - 1</button>
+</div>
 
-   <script>
-      // 定义响应式数据
-      const count = ref(0);
-      const name = ref("");
+<script>
+   const text = ref("hello world");
+   const textArr = reactive({ region: "北京" });
+   console.log(text.value, textArr.region);
 
-      // 注入到根作用域
-      provide({ count, name });
-   </script>
-</body>
+   const num1 = ref(2);
+   const num2 = ref(1);
+   provide({ num1 });
+</script>
 ```
+
+**特性：**
+- ref()：创建基础类型响应式变量（字符串、数字、布尔）
+- reactive()：创建对象、数组类型响应式数据
+- 插值表达式中进行运算时，必须使用 .value 获取真实值
+- r-model 双向绑定的变量，必须通过 provide({ 变量 }) 暴露到模板
+- r-click 内部为原生 JS 代码，访问响应式变量必须加 .value
 
 ## 核心 API
 
 ### 响应式系统
 
 #### `ref()` - 基础类型响应式
-
-创建响应式引用对象，适用于基本类型和复杂类型。
 
 ```javascript
 // 定义基础类型响应式数据
@@ -66,8 +76,6 @@ count.value++; // 修改值，页面自动更新
 - 在模板中使用时自动解包，无需 `.value`
 
 #### `reactive()` - 对象/数组响应式
-
-创建响应式代理对象，支持深度响应式。
 
 ```javascript
 // 定义对象响应式数据
@@ -97,8 +105,6 @@ list.splice(0, 1); // 自动响应式
 
 #### `provide()` - 向根作用域注入数据
 
-将数据注入到根作用域，使其在整个应用中可用。
-
 ```javascript
 // 单个键值对
 provide('user', { name: 'Alice', age: 25 });
@@ -119,8 +125,6 @@ provide({ count, user });
 
 ### 指令系统
 
-RealDom 提供了丰富的内置指令，用于实现条件渲染、列表渲染、事件绑定、双向数据绑定等功能。
-
 #### 指令概览
 
 | 指令        | 作用          | 示例                                            |
@@ -138,284 +142,176 @@ RealDom 提供了丰富的内置指令，用于实现条件渲染、列表渲染
 
 ##### `r-if` - 条件渲染
 
-根据条件表达式的值控制元素的显示/隐藏（通过 `display` 属性，非 DOM 移除）。
-
 ```html
 <!-- 基础用法 -->
-<div r-if="isVisible">显示内容</div>
+<h1>r-if 条件显示/隐藏</h1>
+<span r-if="1 < 2">1</span>
+<span r-if="isShow">显示</span>
+<span r-if="!isShow.value">隐藏</span>
 
-<!-- 复杂表达式 -->
-<div r-if="count.value > 5">计数大于5</div>
-<div r-if="user.age >= 18">已成年</div>
-<div r-if="isLoggedIn && user.role === 'admin'">管理员</div>
+<div>
+   <button r-click="isShow.value = false">隐藏</button>
+   <button r-click="isShow.value = true">显示</button>
+</div>
 
-<script src="">
-   const isVisible = ref(true);
-   const count = ref(10);
-   const user = reactive({ age: 20 });
-   const isLoggedIn = ref(true);
+<script>
+   const isShow = ref(true);
 </script>
 ```
 
 **特性：**
-- 通过 `display` 属性控制可见性，元素保留在 DOM 中
-- 缓存初始 `display` 值，确保显示时恢复原始样式
-- 结果无变化时跳过 DOM 操作，减少重排
+- r-if="表达式"：根据表达式结果控制元素显示/隐藏
+- 判定规则：0、false、空字符串 为隐藏，其他为显示
+- 支持：逻辑运算、响应式变量、三元表达式、原生 JS
+- 响应式变量判断时必须使用 .value 获取真实状态
 
 ##### `r-for` - 数字循环渲染
 
-根据数字表达式重复渲染元素，索引从 1 开始。
-
 ```html
-<!-- 基础用法：循环 5 次 -->
-<div r-for="5">
-   <p>第{{ index }}项</p>
+<h1>r-for 数字循环</h1>
+<div r-for="1 > 0 ? 2 : 1">{{ index }}</div>
+
+<div r-for="forIndex" index="i">
+   <div r-for="i" index="j">
+      {{ j }} × {{ i }} = {{ i * j }}
+      &nbsp;&nbsp;
+   </div>
 </div>
 
-<!-- 使用变量控制循环次数 -->
-<div r-for="count">
-   <p>索引：{{ index }}</p>
+<div>
+   <button r-click="forIndex.value++">增加层数</button>
+   <button r-click="forIndex.value--">减少层数</button>
 </div>
 
-<!-- 自定义索引变量名 -->
-<div r-for="10" index="i">
-   <p>当前索引：{{ i }}</p>
-</div>
-
-<script src="">
-   const count = ref(5);
+<script>
+   const forIndex = ref(3);
 </script>
 ```
 
 **特性：**
-- 索引从 1 开始
-- 通过 `index` 属性自定义索引变量名（默认 "index"）
-- 支持节点缓存复用，提升列表更新性能
-- 自动清理过期节点缓存，防止内存泄漏
+- r-for="数字"：根据数字循环对应次数
+- 支持：固定数字、响应式变量、三元表达式、JS 变量
+- 默认索引变量名为 index
+- 可使用 index="i" 自定义索引名称，支持多层嵌套循环
 
 ##### `r-arr` - 数组循环渲染
 
-遍历数组并逐项渲染模板。
-
 ```html
-<!-- 基础用法 -->
-<div r-arr="list">
-   索引：{{ index }} - 值：{{ value.name }}
+<h1>r-arr 数组循环</h1>
+<div r-arr="['苹果','香蕉']">索引：{{ index }}，值：{{ value }}</div>
+<div r-arr="arr1">索引：{{ index }}，值：{{ value }}</div>
+<div r-arr="arr2.food" index="i" value="item">
+   索引：{{ i }}｜值：{{ item }}｜价格：{{ arr2.price[i] }}
 </div>
 
-<!-- 自定义值和索引变量名 -->
-<div r-arr="list" value="user" index="idx">
-   {{ user.name }} - {{ user.age }} - {{ idx }}
+<div>
+   <button r-click="arr2.food.push('鱼'); arr2.price.push(40);">添加鱼</button>
 </div>
 
-<!-- 直接使用数组字面量 -->
-<div r-arr="['苹果', '香蕉', '橙子']">
-   索引：{{ index }} - 值：{{ value }}
-</div>
-
-<!-- 指定唯一键属性（默认 id） -->
-<div r-arr="list" key="id">
-   {{ value.name }} (ID: {{ value.id }})
-</div>
-
-<script src="">
-   const list = reactive([
-       { id: 1, name: "张三", age: 18 },
-       { id: 2, name: "李四", age: 20 },
-   ]);
+<script>
+   const arr1 = ref(["苹果", "香蕉", "梨子", "葡萄"]);
+   const arr2 = reactive({
+      food: ["牛肉", "鱼肉", "鸡肉"],
+      price: [10, 20, 30]
+   });
 </script>
 ```
 
-**属性说明：**
-- `value` - 自定义项变量名（默认 "value"）
-- `index` - 自定义索引变量名（默认 "index"）
-- `key` - 指定唯一键属性（默认 "id"），用于高效复用节点
-
 **特性：**
-- 支持复杂对象数组和基本类型数组
-- 通过唯一键属性实现节点复用，提升性能
-- 自动清理过期节点缓存
+- r-arr="数组"：遍历数组并渲染每一项
+- 支持：直接写数组、响应式变量、对象内数组
+- 默认项变量：value，默认索引：index
+- 可使用 value="item" index="i" 自定义名称
+- 数组变化（push、splice）时视图自动更新
 
 ##### `r-api` - 异步数据加载
 
-自动发起 HTTP 请求并渲染数据。
-
 ```html
-<!-- 基础用法：GET 请求 -->
-<div r-api="https://api.example.com/users">
-   {{ value.name }}
-</div>
+<h1>r-api 网络请求</h1>
 
-<!-- 指定响应数据字段 -->
-<div r-api="https://api.example.com/data" list="items">
-   {{ value.title }}
-</div>
+<ul r-api="https://xx.cxfjh.cn/api/{{ms}}">
+   <li>{{ value.content }} · {{ value.date }}</li>
+</ul>
 
-<!-- POST 请求 -->
-<div r-api="https://api.example.com/create" meth="post" data-body='{"name": name.value}'>
-   创建成功：{{ value.id }}
-</div>
+<div r-api="https://xx.cxfjh.cn/api/messages" hdr="hdr" meth="POST" data-body="dataBody"></div>
 
-<!-- 自定义请求头 -->
-<div r-api="https://api.example.com/protected" hdr='hdr'>
-   {{ value.data }}
-</div>
+<ul r-api="https://xx.cxfjh.cn/api/messages" aw arr="list" refr="#refreshBtn">
+   <li r-if="_aw" r-arr="list">
+      {{ value.content }} · {{ value.date }}
+   </li>
+</ul>
 
-<!-- 手动加载模式 -->
-<div r-api="https://api.example.com/data" aw>
-   <span>{{ _aw ? '加载完成' : '等待加载' }}</span>
-   <button id="refreshBtn">刷新数据</button>
-</div>
+<button id="refreshBtn">刷新</button>
 
-<!-- 动态 URL -->
-<div r-api="https://api.example.com/users/{{ userId.value }}">
-   {{ value.name }}
-</div>
-
-<script src="">
-   const name = ref("张三");
-   const userId = ref(123);
-   
+<script>
+   const ms = ref("messages");
+   const dataBody = ref({ content: "hello RealDom" });
    const hdr = {
-       "Authorization": "Bearer token123",
-       "Content-Type": "application/json"
+      "Authorization": "Bearer token123",
+      "Content-Type": "application/json"
    };
 </script>
 ```
 
-**属性说明：**
-- `meth` - HTTP 方法（默认 GET），支持 GET、POST、PUT、PATCH、DELETE
-- `hdr` - 请求头（JSON 字符串或表达式）
-- `list` - 响应中的数组字段名
-- `key` - 数组项唯一键属性（默认 "id"）
-- `value` - 模板中的项变量名（默认 "value"）
-- `index` - 模板中的索引变量名（默认 "index"）
-- `arr` - 将整个数组注入作用域的变量名
-- `refr` - 刷新按钮选择器
-- `aw` - 手动加载模式标志
-- `data-body` - POST/PUT/PATCH 请求体表达式
-
 **特性：**
-- 支持动态 URL（插值和变量引用）
-- 支持手动加载模式
-- 支持刷新按钮绑定
-- 自动处理请求状态（`_aw` 变量表示是否完成）
+- r-api="地址"：发送网络请求并自动渲染列表
+- meth="GET/POST"：设置请求方式，默认为 GET
+- hdr="变量"：绑定请求头对象
+- data-body="变量"：POST 请求时传递请求体数据
+- aw：开启手动加载模式，不会自动请求
+- _aw：请求完成标志，可用于 r-if 判断加载状态
+- arr="list"：将接口数组存入 list 变量，手动循环渲染
+- refr="#id"：绑定刷新按钮，点击重新请求
+- list="data"：指定接口返回数据中的数组字段
 
 ##### `r-click` - 事件绑定
 
-绑定 DOM 事件，支持所有原生事件类型。
-
-**基础用法：点击事件**
-
 ```html
-<!-- 基础点击事件 -->
-<button r-click="count.value++">增加计数</button>
-<button r-click="info.age = 0">重置年龄</button>
-
-<!-- 多条语句 -->
-<button r-click="count.value++; alert('当前计数：' + count.value)">增加并弹窗</button>
-
-<!-- 调用函数 -->
-<button r-click="handleSubmit()">提交</button>
-
-<script src="">
-   const count = ref(0);
-   const info = reactive({ age: 0 });
-
-   const handleSubmit = () => {
-      console.log("提交数据", count.value, info.age);
-      alert("提交成功！");
-   };
-</script>
-```
-
-**扩展事件类型**
-
-通过元素属性指定事件类型，支持所有原生事件：
-
-```html
-<!-- 双击事件 -->
-<div r-click="alert('双击触发')" dblclick>双击我</div>
-
-<!-- 鼠标移入事件 -->
-<div r-click="console.log('鼠标移入')" mouseover>鼠标移入</div>
-
-<!-- 鼠标移出事件 -->
-<div r-click="console.log('鼠标移出')" mouseout>鼠标移出</div>
-
-<!-- 键盘事件 -->
-<input type="text" r-click="console.log('按下了：' + event.key)" keydown placeholder="按下键盘触发">
-
-<!-- 右键菜单事件 -->
-<div r-click="alert('右键菜单')" contextmenu>右键点击</div>
-```
-
-**键盘事件按键过滤**
-
-支持按特定按键触发事件：
-
-```html
-<!-- 只在按下 Enter 键时触发 -->
-<input type="text" r-click="handleSearch()" keydown="enter" placeholder="按 Enter 搜索">
-
-<!-- 只在按下 Esc 键时触发 -->
-<input type="text" r-click="clearInput()" keydown="esc" placeholder="按 Esc 清空">
-
-<!-- 组合键 -->
-<input type="text" r-click="handleSave()" keydown="ctrl+s" placeholder="按 Ctrl+S 保存">
-
-<script src="">
-   const handleSearch = () => console.log('搜索');
-   const clearInput = () => console.log('清空');
-   const handleSave = () => console.log('保存');
-</script>
+<h1>r-click 事件指令</h1>
+<button r-click="alert('单击')">单击</button>
+<button r-click="alert('双击')" dblclick>双击</button>
+<button r-click="alert('鼠标按下')" mousedown>鼠标按下</button>
+<label>
+   <input type="text" r-click="alert('键盘抬起')" keyup/>
+   <input type="text" r-click="alert('键盘按下 enter')" keydown="enter"/>
+</label>
 ```
 
 **特性：**
-- 自动检测元素上的事件类型属性
-- 键盘事件支持按键名过滤
-- 右键菜单事件自动阻止默认行为
-- 预编译事件处理函数，避免重复编译
+- r-click="JS代码"：绑定点击/交互事件，内部写原生 JS
+- 支持所有原生事件：click、dblclick、mousedown、mouseup、mouseover、contextmenu、keyup、keydown
+- keydown="enter"：监听回车按键
+- 事件内部访问响应式变量必须使用 .value
 
 ##### `r-cp` - 组件引用
 
-引用通过 `<template>` 标签定义的组件。
-
 ```html
-<!-- 定义组件 -->
-<template r-cp="user-card">
-   <div class="card">
-      <h3>{{ name }}</h3>
-      <p>年龄：{{ age }}</p>
-   </div>
+<!-- template 定义组件 -->
+<template r-cp="user">
+   <h1>CP</h1>
+   <h3>{{ name }}</h3>
+   <h4>{{ userAge }}</h4>
 </template>
 
-<!-- 使用组件 -->
-<div r-cp="user-card" $name="张三" $age="18"></div>
+<!-- 实例化组件 -->
+<div r-cp="user" $name="fjh" $user-age="age1"></div>
+<div r-cp="user" $name="xxx" $user-age="1"></div>
 
-<!-- 使用变量传递 props -->
-<div r-cp="user-card" $name="userName.value" $age="userAge.value"></div>
-
-<script src="">
-   const userName = ref("李四");
-   const userAge = ref(25);
+<script>
+   const age1 = ref(20);
+   setTimeout(() => age1.value = 30, 2000);
 </script>
 ```
 
-**Props 传递规则：**
-- 使用 `$` 前缀传递 props
-- 驼峰命名使用短横杠转换：`$user-name` → `userName`
-- 支持静态值和动态表达式
-
 **特性：**
-- 组件作用域继承根作用域并合并 props
-- 支持 props 变化时自动重新渲染
+- template定义模板组件
+- r-cp="组件名"：使用并渲染组件
+- $属性="值"：向组件传递参数，支持响应式变量
+- 传递参数时驼峰式写法：$user-age → 组件内 userAge
+- 组件可复用，多实例互不干扰
+- 传递的变量自动响应式，数据变化视图同步更新
 
 ### 组件系统
-
-#### `dom()` - 定义组件
-
-使用 `dom()` 函数定义组件，支持模板、样式、脚本分离。
 
 ```html
 <body>
@@ -425,91 +321,104 @@ RealDom 提供了丰富的内置指令，用于实现条件渲染、列表渲染
 <script src="">
     // 定义组件
     const UserComponent = dom("user", {
-       // HTML 模板
        template: `
-           <div class="user-card">
-               <h3>{{ username }}</h3>
-               <p>年龄：{{ age.value }}</p>
-               <button r-click="increaseAge()">增加年龄</button>
-           </div>
+            <div class="card">
+                <h1>{{ $pro.domText }}</h1>
+                
+                <h3>名字：{{ username.name }}</h3>
+                <p ref="age">年龄: {{ age }}</p>
+                
+                <p>性别: {{ $pro.gender }}</p>
+                <p>邮箱: {{ $pro.email }}</p>
+                
+                <button r-click="setInfo()">自增</button>
+                
+                <span>{{ input }}</span>
+                <input type="text" r-model="input"/>
+                
+                <p>当前计数: {{ count }}</p>
+            </div>
         `,
 
-       // CSS 样式
        style: `
-           .user-card {
-               border: 1px solid #ccc;
-               padding: 16px;
-               border-radius: 8px;
-           }
-           button {
-               background: #42b983;
-               color: white;
-               border: none;
-               padding: 8px 16px;
-               border-radius: 4px;
-           }
+            .card {
+                border: 1px solid #ccc;
+                padding: 20px;
+                border-radius: 8px;
+                max-width: 300px;
+                background: white;
+            }
+			
+            h3 {
+                color: #333;
+            }
+			
+            button {
+                background-color: #4CAF50;
+                color: white;
+                border: none;
+                padding: 10px 15px;
+                border-radius: 5px;
+                cursor: pointer;
+            }
         `,
 
-       // 脚本逻辑
-       script: (props, utils) => {
-          const { $pro, $refs } = utils;
-          
-          // 初始化数据
-          const setup = ($) => {
-             const age = ref($pro.age.value);
-             const username = ref("匿名用户");
+       script: ({ $refs, $pro }, { ref, reactive, provide }) => {
+           const setup = (ctx) => {
+           // 组件外部响应式变量
+           const age = ref(20);
+           const username = reactive({ name: "fjh" });
+      
+           // 组件内部响应式变量
+           const input = ref("x");
+           provide({ input });
+      
+           // 组件内部响应式变量, 不需要返回, 可以在模板中使用
+           ctx.count = ref(0);
+      
+           // 组件方法
+           const setInfo = () => {
+               age.value++;
+               ctx.count.value++;
+               $pro.gender.value = "x" + age.value;
+               console.log($refs.age, ctx.count);
+           };
+      
+           return { age, username, input, setInfo };
+       };
 
-             // 方法
-             const increaseAge = () => {
-                age.value++;
-                console.log($refs.p.innerText);
-             };
-             
-             // 通过 $ 定义的数据（可选）
-             $.text = ref("Hello");
-             $.setText = () => $.text.value = "Hello World";
+        // 组件 DOM 渲染完成后调用
+        function mounted() {
+           console.log("组件 DOM 渲染完成后调用");
+           $refs.age.style.color = "red";
+           console.log(this.age.value);
+        }
+      
+        // 组件 DOM 销毁时调用
+        function unmounted() {
+           console.log("组件 DOM 销毁时调用");
+        }
 
-             return { age, username, increaseAge };
-          };
+       return { setup, mounted, unmounted };
+    },
 
-          // 生命周期钩子
-          function mounted() {
-             console.log("组件 DOM 挂载完成");
-             console.log(this.$refs.p);
-          }
-
-          function unmounted() {
-             console.log("组件 DOM 销毁时调用");
-          }
-
-          return { setup, mounted, unmounted };
-       },
-
-       // 样式隔离（默认启用）
-       sty: true,
-
-       // 组件属性默认值
+       // 默认值
        pro: {
-          age: ref(18),
-          title: ref("用户信息"),
-          x: 12
+           gender: "性别",
+           domText: "Hello World",
+           email: "qq"
        }
     });
 
     // 挂载组件
-    const uc = UserComponent({ 
-        name: "#user", 
-        sty: true, 
-        pro: { age: ref(11) } 
-    });
+    const uc = UserComponent({ pro: { gender: "女", email }, name: "#user", sty: true });
     
     // 组件实例方法
     setTimeout(() => {
-        console.log(uc.root()); // 获取组件的根元素
-        uc.age.value = 20; // 修改内部数据
-        uc.$pro.age = 15; // 修改默认值
-        uc.delSty(); // 删除共享样式
-        uc.del(false); // 删除组件
+       console.log(uc.root()); // 获取组件的根元素
+       uc.age.value = 20; // 修改内部数据
+       uc.delSty(); // 删除共享样式
+       uc.del(false); // 删除组件
     }, 2000);
 </script>
 ```
@@ -533,119 +442,82 @@ RealDom 提供了丰富的内置指令，用于实现条件渲染、列表渲染
 
 ### 路由系统
 
-RealDom 提供基于 URL Search Params 的 SPA 路由功能。
-
-#### 路由页面定义
-
-使用 `r-page` 属性定义路由页面，`&route` 属性指定渲染容器。
-
 ```html
-<body>
-   <!-- 定义路由页面 -->
-   <div r-page="home">
-      <h3>首页</h3>
-      <p>欢迎来到 RealDom</p>
-   </div>
-   
-   <div r-page="about" &route="info">
-      <h3>关于</h3>
-      <p>RealDom 是一个轻量级响应式框架</p>
-   </div>
-   
-   <div r-page="settings" &route="view">
-      <h3>设置</h3>
-      <p>应用设置页面</p>
-   </div>
+<!-- 定义路由页面 -->
+<div r-page="home">
+   <h3>【首页】 我是 view 容器的内容</h3>
+</div>
+<div r-page="settings" &route="view">
+   <h3>【设置】 我是 view 容器的内容</h3>
+</div>
 
-   <!-- 路由容器 -->
-   <div>
-      <h1>主视图容器</h1>
-      <div route="view"></div>
-   </div>
-   <div>
-      <h1>信息容器</h1>
-      <div route="info"></div>
-   </div>
+<div r-page="about" &route="info">
+   <h3>【关于】 我是 info 容器的内容</h3>
+</div>
+<div r-page="mine" &route="info">
+   <h3>【我的】 我是 info 容器的内容</h3>
+</div>
 
-   <!-- 路由导航 -->
-   <button r-route="home">首页</button>
-   <button r-route="about">关于</button>
-   <button r-route="settings">设置</button>
-   
-   <!-- 编程式导航 -->
-   <button r-click="router.nav('home')">编程式导航</button>
-</body>
+<!-- 路由容器 -->
+<div>
+   <h1>view 容器</h1>
+   <div route="view"></div>
+</div>
+<div>
+   <h1>info 容器</h1>
+   <div route="info"></div>
+</div>
+
+<!-- 路由导航 -->
+<button r-route="home" route-active="r-x">view首页</button>
+<button r-route="about" route-active>info关于</button>
+<button r-route="settings" route-active>view设置</button>
+<button r-click="router.nav('mine')">info我的</button>
+
+<script>
+   router.add("mine", () => {
+      console.log("路由激活");
+   }, "info");
+</script>
 ```
-
-#### 路由 API
-
-```javascript
-// 注册路由
-router.add('home', () => {
-   console.log('首页路由激活');
-}, 'view');
-
-router.add('about', () => {
-   console.log('关于页面路由激活');
-}, 'info');
-
-// 导航到指定路由
-router.nav('home');
-
-// 替换当前历史记录
-router.nav('about', true);
-```
-
-**路由参数：**
-- 路由使用 URL Search Params 传递参数
-- 格式：`?path=home`
-- 示例：`https://example.com/?path=home`
 
 **特性：**
-- 支持多容器路由
-- 支持声明式和编程式导航
-- 自动预渲染所有路由页面
+- r-page="路由名"：定义路由页面内容
+- &route="容器名"：指定当前路由渲染到哪个容器
+- route="容器名"：路由渲染出口，页面显示位置
+- r-route="路由名"：点击跳转对应路由
+- route-active：路由激活时自动添加样式，默认类名 r-active
+- route-active="类名"：可自定义激活样式类名
+- router.nav('路由名')：JS 中跳转路由
+- router.add('路由名', 回调, '容器')：注册路由并绑定激活回调
 
 ### DOM 引用
 
-使用 `r` 指令和 `$r` 对象获取 DOM 元素引用。
-
-#### 静态引用
-
 ```html
-<body>
-   <div r="container">内容容器</div>
-   <input type="text" r="username" placeholder="用户名">
-</body>
+<h1>r DOM 元素引用</h1>
+<span r="span">span</span>
+<span r="rSpan">span</span>
+<span r="{{1 < 2 ? 'span1' : 'rSpan'}}">动态</span>
 
-<script src="">
-   // 在 onMounted 中访问引用
+<script>
+   const rSpan = ref("span");
+
    onMounted(() => {
-      console.log($r.container); // 获取 DOM 元素
-      $r.container.innerText = "修改后的内容";
-      $r.username.value = "默认值";
+      console.log($r.span, $r.rSpan);
+      rSpan.value = "span1";
+      $r.rSpan.style.color = "red";
+      $r.span.style.color = "green";
    });
 </script>
 ```
 
-#### 动态引用
+**特性：**
+- r="名称"：给 DOM 元素设置引用名称
+- 通过 $r.名称 可直接获取并操作 DOM 元素
+- 支持动态名称：可使用表达式、响应式变量
+- 建议在 onMounted 生命周期中使用，确保 DOM 已渲染
+- 引用名称全局唯一，不可重复
 
-```html
-<body>
-   <div r="{{ refName }}">内容容器</div>
-   <input type="text" r="{{ inputRef }}" placeholder="用户名">
-</body>
-
-<script src="">
-   const refName = ref("container");
-   const inputRef = ref("username");
-
-   onMounted(() => {
-      console.log($r.container);
-      console.log($r.username);
-   });
-</script>
-```
 
 #### 使用空 src 脚本
 
@@ -666,87 +538,19 @@ router.nav('about', true);
 - 动态引用：`r="{{refName}}"` → refName 变化时自动更新
 - 元素销毁时自动清理引用，防止内存泄漏
 
-## 注意事项
+### 生命周期
 
-### 响应式数据访问
+```html
+<script src>
+    // DOM 初始化后执行
+	onMounted(() => {})
+</script>
 
-- **ref 类型**：在脚本中需要通过 `.value` 访问/修改，在模板中使用时自动解包
-- **reactive 类型**：在脚本中直接访问/修改，无需 `.value`，在模板中使用时也无需 `.value`
-
-```javascript
-const count = ref(0);
-const user = reactive({ name: '张三' });
-
-// 脚本中
-console.log(count.value); // 0
-count.value = 1;
-console.log(user.name); // '张三'
-user.name = '李四';
-
-// 模板中
-<h1>{{ count }}</h1>
-<p>{{ user.name }}</p>
+<script src>
+   // 空 src 脚本在 DOM 初始化后执行
+</script>
 ```
 
-### r-model 双向绑定
-
-- 必须通过 `provide()` 注册后才能使用
-- 支持简单路径：`r-model="name"`
-- 支持嵌套路径：`r-model="user.profile.name"`
-- 支持 input、select、checkbox、radio 等表单元素
-
-### 组件样式隔离
-
-- 默认启用样式隔离，组件样式不会影响全局
-- 可通过 `sty: false` 关闭隔离
-
-### 表达式解析
-
-- 模板中的 `{{ }}` 支持 JS 表达式和插值
-- 指令中的值（如 r-if、r-click）直接执行 JS 代码
-- 支持动态 URL 和属性值
-
-### 性能优化建议
-
-1. **使用 r-for 和 r-arr 时提供唯一键**
-   ```html
-   <div r-arr="list" key="id">{{ value.name }}</div>
-   ```
-
-2. **避免深层嵌套响应式对象**
-   ```javascript
-   // 不推荐
-   const state = reactive({
-       level1: { level2: { level3: { value: 1 } } }
-   });
-   
-   // 推荐：扁平化结构
-   const state = reactive({
-       level1Value: 1,
-       level2Value: 2,
-       level3Value: 3
-   });
-   ```
-
-3. **合理使用批量更新**
-   ```javascript
-   // 批量操作，只触发一次更新
-   state.items.push(1);
-   state.items.push(2);
-   state.items.push(3);
-   ```
-
-## 浏览器兼容性
-
-- Chrome/Edge: >= 88
-- Firefox: >= 78
-- Safari: >= 14
-- Opera: >= 74
-
-## 许可证
-
-MIT License
-
----
-
-**RealDom** - 让响应式开发更简单
+**特性：**
+- onMounted()：组件 DOM 挂载完成后调用
+- 空 src 脚本在 DOM 初始化后执行

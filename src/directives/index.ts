@@ -10,7 +10,7 @@ import './arr.ts';
 import './api.ts';
 import './model.ts';
 import './cp.ts';
-import './dom-directive.ts';
+import './dom.ts';
 import './route.ts';
 import './ref.ts';
 

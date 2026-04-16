@@ -10,16 +10,15 @@ export default defineConfig({
 
     build: {
         target: "esnext",
-        minify: true,
+        minify: "terser",
         lib: {
             entry: resolve("src/index.ts"),
-            name: "wwr",
-            fileName: () => "0.0.1.js",
-            formats: ["umd"],
-        },
-        rollupOptions: {
-            treeshake: true,
-            output: { comments: false, },
-        },
+            fileName: (format) => {
+                if (format === "es") return "es.0.0.1.js";
+                return "0.0.1.js";
+            },
+            name: "RealDom",
+            formats: ["es", "iife"]
+        }
     },
 });

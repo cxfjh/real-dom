@@ -222,14 +222,30 @@ export const createComponent: (compName: string, options: ComponentOptions) => u
      * @param pro - 组件属性
      * @param name - 目标选择器或 DOM 元素
      * @param isolationOverride - 可选的样式隔离覆盖
-     * @returns 组件实例或 null
+     * @returns 组件实例
      */
     const mountComponent = (pro: Record<string, unknown>, name: string | HTMLElement, isolationOverride?: boolean,) => {
-        const mountTarget = typeof name === "string" ? document.querySelector(name) : name;
+        let mountTarget = typeof name === "string" ? document.querySelector(name) : name;
+
+        // 如果目标元素不存在，自动创建
         if (!mountTarget) {
-            console.error(`组件 "${ compName }" 挂载失败：找不到目标元素`);
-            return null;
+            // 自动创建
+            let app = document.getElementById("app");
+            if (!app) {
+                const appElement = document.createElement("div");
+                appElement.id = "app";
+                document.body.appendChild(appElement);
+                app = appElement;
+            }
+
+            // 创建组件实例
+            const element = document.createElement("div");
+            element.id = compName;
+            app.appendChild(element);
+            mountTarget = element;
         }
+
+        // 创建组件实例
         const { render } = componentFactory(pro, isolationOverride);
         return render(mountTarget as HTMLElement, isolationOverride);
     };

@@ -100,6 +100,14 @@ export const router: Router = {
                 console.error(`路由执行错误 [${ path }]:`, error);
             }
         }
+
+        // 路由激活样式
+        document.querySelectorAll("[route-active]").forEach(el => {
+            const value = el.getAttribute('route-active') || "r-active";
+            const elPath = el.getAttribute("r-route");
+            el.classList.remove(value);
+            if (elPath === path) el.classList.add(value);
+        });
     },
 
     /**
@@ -193,7 +201,7 @@ export const router: Router = {
             // 如果页面名存在，则收集页面内容并从 DOM 中移除
             if (pageName) {
                 this.originalPageElements.set(pageName, { html: pageElement.innerHTML, target: targetName, });
-                this.add(pageName, new Function(), targetName);
+                if (!this.routes.has(pageName)) this.add(pageName, new Function(), targetName);
                 pageElement.remove();
             }
         });

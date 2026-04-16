@@ -83,7 +83,7 @@ registerDirective("r-click", (el: HTMLElement, code: string, scope: ReactiveObje
     // 绑定事件
     elAny.__clickHandler = eventHandler;
     elAny.__clickEventType = eventType;
-    el.addEventListener(eventType, eventHandler, { passive: true });
+    el.addEventListener(eventType, eventHandler, { passive: !(eventType === "contextmenu" || eventType === "keydown" || eventType === "keyup") });
 
     // 自动清理
     el.addEventListener("beforeunload", cleanup);
