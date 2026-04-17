@@ -2,6 +2,8 @@ import type { ReactiveObject } from "../types";
 import { activeFns } from "../utils/shared.ts";
 import { registerDirective } from "./registry.ts";
 
+import { watchElementRemove } from "../utils/directive.ts";
+
 /**
  * 注册 r-model 指令
  *
@@ -132,12 +134,10 @@ registerDirective("r-model", (el: HTMLElement, path: string, scope: ReactiveObje
     }
 
     // 自动清理
-    const cleanup = (): void => {
+    watchElementRemove(el, () => {
         if (elAny.__modelHandler) {
             el.removeEventListener(elAny.__modelEventType as string, elAny.__modelHandler as EventListener);
             elAny.__modelHandler = null;
         }
-        el.removeEventListener("beforeunload", cleanup);
-    };
-    el.addEventListener("beforeunload", cleanup);
+    });
 });

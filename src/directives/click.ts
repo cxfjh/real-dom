@@ -1,20 +1,20 @@
 import type { ReactiveObject } from "../types";
 import { EVENT_MAP, KEY_MAP } from "../utils/constants.ts";
 import { registerDirective } from "./registry.ts";
+import { initDir, watchElementRemove } from "../utils/directive.ts";
 
 /**
  * 注册 r-click 指令
  *
  * @remarks
- * - 自动检测元素上的事件类型属性（如 keydown、contextmenu）
- * - 键盘事件支持按键名过滤（如 enter、esc）
+ * - 自动检测元素上的事件类型属性
+ * - 键盘事件支持按键名过滤
  * - 右键菜单事件自动阻止默认行为
  * - 预编译事件处理函数，避免每次事件触发时重复编译
  * - 支持事件处理器的自动清理
  */
 registerDirective("r-click", (el: HTMLElement, code: string, scope: ReactiveObject): void => {
-    if (!code.trim()) return void console.warn("[r-click] 事件代码不能为空");
-    if (!scope || typeof scope !== "object") return void console.warn("[r-click] 作用域无效");
+    if (!initDir(el, code, scope, "r-click", "rClick")) return;
 
     // 检测事件类型
     const eventType = ((): string => {
@@ -34,7 +34,6 @@ registerDirective("r-click", (el: HTMLElement, code: string, scope: ReactiveObje
     const cleanup = (): void => {
         if (elAny.__clickHandler) {
             el.removeEventListener(elAny.__clickEventType as string, elAny.__clickHandler as EventListener);
-            el.removeEventListener("beforeunload", cleanup);
             delete elAny.__clickHandler;
             delete elAny.__clickFn;
             delete elAny.__clickEventType;
@@ -86,5 +85,5 @@ registerDirective("r-click", (el: HTMLElement, code: string, scope: ReactiveObje
     el.addEventListener(eventType, eventHandler, { passive: !(eventType === "contextmenu" || eventType === "keydown" || eventType === "keyup") });
 
     // 自动清理
-    el.addEventListener("beforeunload", cleanup);
+    watchElementRemove(el, cleanup);
 });

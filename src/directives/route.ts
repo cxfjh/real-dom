@@ -1,6 +1,8 @@
 import type { ReactiveObject } from "../types";
 import { expressionParser } from "../core";
-import { registerDirective } from './registry.ts';
+import { registerDirective } from "./registry.ts";
+
+import { watchElementRemove } from "../utils/directive.ts";
 
 /**
  * 注册 r-route 指令
@@ -11,13 +13,13 @@ import { registerDirective } from './registry.ts';
  * - 仅当路径已注册时才执行导航
  * - 支持动态路由路径
  */
-registerDirective('r-route', (el: HTMLElement, pathExpr: string, scope: ReactiveObject, deps: Set<string>): void => {
+registerDirective("r-route", (el: HTMLElement, pathExpr: string, scope: ReactiveObject, deps: Set<string>): void => {
     const path = expressionParser.parse(pathExpr, scope, deps) as string;
     if (!path) return;
 
     // 清理旧处理器
     const elAny = el as unknown as Record<string, unknown>;
-    if (elAny._routeHandler) el.removeEventListener('click', elAny._routeHandler as EventListener);
+    if (elAny._routeHandler) el.removeEventListener("click", elAny._routeHandler as EventListener);
 
     // 创建新处理器
     elAny._routeHandler = (event: Event): void => {
@@ -26,14 +28,11 @@ registerDirective('r-route', (el: HTMLElement, pathExpr: string, scope: Reactive
     };
 
     // 添加点击事件监听器
-    el.addEventListener('click', elAny._routeHandler as EventListener);
+    el.addEventListener("click", elAny._routeHandler as EventListener);
 
     // 自动清理
-    const cleanup = (): void => {
-        el.removeEventListener('click', elAny._routeHandler as EventListener);
+    watchElementRemove(el, () => {
+        el.removeEventListener("click", elAny._routeHandler as EventListener);
         delete elAny._routeHandler;
-    };
-
-    // 添加 beforeunload 事件监听器
-    el.addEventListener('beforeunload', cleanup);
+    });
 });

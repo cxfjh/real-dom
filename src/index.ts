@@ -1,21 +1,21 @@
 import type { ComponentOptions } from "./types";
-import { batchUpdater, createComponent, createReactive, createRef, processElement } from "./core";
+import { batchUpdater, createComponent, createReactive, createRef, processElement, watch } from "./core";
 import "./directives/index.ts";
 import { router } from "./router";
 import { componentTemplates, directives, inlineScripts, mountedCallbacks, pendingProviders, } from "./utils/shared.ts";
 import { INTERPOLATION_REGEX } from "./utils/constants.ts";
 
-/**
- * 创建响应式引用
- * @see {@link createRef}
- */
+/** 创建响应式引用 */
 window.ref = createRef;
 
-/**
- * 创建响应式代理对象
- * @see {@link createReactive}
- */
+/** 创建响应式代理对象 */
 window.reactive = createReactive;
+
+/** 监听响应式数据变化 */
+window.watch = watch;
+
+/** 挂载路由管理器 */
+window.router = router;
 
 /**
  * 向根作用域注入数据
@@ -31,7 +31,9 @@ window.provide = (key: string | Record<string, unknown>, value: unknown = null):
 /**
  * 定义组件
  *
- * @see {@link createComponent}
+ * @param compName - 组件名称
+ * @param options - 组件选项
+ * @returns 组件实例
  */
 window.dom = (compName: string, options: ComponentOptions): unknown => createComponent(compName, options);
 
@@ -45,8 +47,6 @@ window.onMounted = function (callback: Function): void {
     else console.warn("onMounted 只接受函数作为参数。");
 };
 
-/** 挂载路由管理器 */
-window.router = router;
 
 /**
  * DOMContentLoaded 事件处理：启动应用

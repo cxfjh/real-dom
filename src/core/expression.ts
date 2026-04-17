@@ -17,7 +17,7 @@ export const expressionParser: ExpressionParser = {
      * @param unwrapRef - 是否自动解包 Ref 对象的 .value，默认 true
      * @returns 表达式的计算结果；解析失败时返回原始表达式字符串
      */
-    parse(expr: string, scope: ReactiveObject = {} as ReactiveObject, deps: Set<string> = new Set(), unwrapRef: boolean = true,): unknown {
+    parse(expr: string, scope: ReactiveObject = {} as ReactiveObject, deps: Set<string> = new Set(), unwrapRef: boolean = true): unknown {
         try {
             // 收集表达式中的变量依赖
             const vars = expr.match(VARIABLE_REGEX) || [];

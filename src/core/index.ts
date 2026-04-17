@@ -10,3 +10,4 @@ export { createUpdateFn, processTextNode, processElement } from "./dom-processor
 export { createRef } from "./ref.ts";
 export { createReactive } from "./reactive.ts";
 export { createComponent } from "./component.ts";
+export { watch } from "./watch.ts";

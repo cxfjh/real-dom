@@ -1,58 +1,48 @@
 import type { ReactiveObject } from "../types";
-import { activeFns, elDeps, depsMap } from '../utils/shared.ts';
-import { expressionParser } from "../core";
-import { processElement } from "../core";
-import { registerDirective } from './registry.ts';
+import { activeFns, depsMap, elDeps } from "../utils/shared.ts";
+import { expressionParser, processElement } from "../core";
+import { registerDirective } from "./registry.ts";
+import { initDir, watchElementRemove } from "../utils/directive.ts";
 
 /**
  * 注册 r-arr 指令
  *
  * @remarks
- * - 表达式求值为数组，逐项渲染模板
- * - 通过 value 属性自定义项变量名（默认 "value"）
- * - 通过 index 属性自定义索引变量名（默认 "index"）
- * - 通过 key 属性指定唯一键属性（默认 "id"），用于高效复用节点
- * - 支持复杂对象数组和基本类型数组
+ * 支持的属性配置：
+ * - `value` 属性自定义项变量名 (默认 "value")
+ * - `index` 属性自定义索引变量名 (默认 "index")
+ * - `key` 属性指定唯一键属性 (默认 "id")
  */
-registerDirective('r-arr', (el: HTMLElement, expr: string, scope: ReactiveObject, deps: Set<string>): void => {
-    if (expr.trim() === '') return void console.warn('[r-arr] 数组表达式不能为空');
-    if (!scope || typeof scope !== 'object') return void console.warn('[r-arr] 作用域无效');
-    if ((el as unknown as Record<string, unknown>).__arrProcessed) return;
-    (el as unknown as Record<string, unknown>).__arrProcessed = true;
+registerDirective("r-arr", (el: HTMLElement, expr: string, scope: ReactiveObject, deps: Set<string>): void => {
+    if (!initDir(el, expr, scope, "r-arr", "rArr")) return;
 
     // 获取循环模板
     const itemTemplate = el.innerHTML.trim();
-    if (!itemTemplate) return void console.warn('[r-arr] 循环模板不能为空');
+    if (!itemTemplate) return void console.warn("[r-arr] 循环模板不能为空");
 
     // 读取配置属性
-    const indexKey = el.getAttribute('index') || 'index';
-    const itemKey = el.getAttribute('value') || 'value';
-    const keyProp = el.getAttribute('key') || 'id';
+    const indexKey = el.getAttribute("index") || "index";
+    const itemKey = el.getAttribute("value") || "value";
+    const keyProp = el.getAttribute("key") || "id";
 
     // 缓存基础属性
     const baseAttrs: Record<string, string> = {};
     const baseClass = el.className.trim();
     const baseStyle = el.style.cssText.trim();
     Array.from(el.attributes).forEach(attr => {
-        if (['r-arr', 'index', 'value', 'key', 'class', 'style'].includes(attr.name)) return;
+        if (["r-arr", "index", "value", "key", "class", "style"].includes(attr.name)) return;
         baseAttrs[attr.name] = expressionParser.parseText(attr.value.trim(), scope, deps);
     });
 
     // 节点缓存
-    const nodeCache = new Map<string, { nodes: Node[]; itemScope: ReactiveObject }>();
+    const nodeCache = new Map<string, {nodes: Node[]; itemScope: ReactiveObject}>();
     let prevKeySet = new Set<string>();
 
-    /**
-     * 生成数组项的唯一键
-     *
-     * @param item - 数组项数据
-     * @param index - 数组索引
-     * @returns 唯一键字符串
-     */
+    // 生成数组项的唯一键
     const getUniqueKey = (item: unknown, index: number): string => {
-        if (item && typeof item === 'object' && (item as unknown as Record<string, unknown>)[keyProp] !== undefined) return String((item as unknown as Record<string, unknown>)[keyProp]);
-        const dataHash = typeof item === 'object' ? JSON.stringify(item).slice(0, 50) : String(item);
-        return `${index}-${dataHash}`;
+        if (item && typeof item === "object" && (item as unknown as Record<string, unknown>)[keyProp] !== undefined) return String((item as unknown as Record<string, unknown>)[keyProp]);
+        const dataHash = typeof item === "object" ? JSON.stringify(item).slice(0, 50) : String(item);
+        return `${ index }-${ dataHash }`;
     };
 
     // 核心更新函数
@@ -64,7 +54,7 @@ registerDirective('r-arr', (el: HTMLElement, expr: string, scope: ReactiveObject
             const parsed = expressionParser.parse(expr.trim(), scope, deps);
             arr = Array.isArray(parsed) ? parsed : [];
         } catch (parseErr) {
-            console.error('[r-arr] 数组解析错误:', { expr: expr.trim(), error: (parseErr as Error).message, stack: (parseErr as Error).stack?.slice(0, 300), });
+            console.error("[r-arr] 数组解析错误:", { expr: expr.trim(), error: (parseErr as Error).message, stack: (parseErr as Error).stack?.slice(0, 300), });
             arr = [];
         }
 
@@ -100,7 +90,7 @@ registerDirective('r-arr', (el: HTMLElement, expr: string, scope: ReactiveObject
                 nodesToAdd = reuseFragment;
             } else {
                 // 创建新节点
-                const tempContainer = document.createElement('div');
+                const tempContainer = document.createElement("div");
                 if (baseClass) tempContainer.className = baseClass;
                 if (baseStyle) tempContainer.style.cssText = baseStyle;
 
@@ -129,7 +119,7 @@ registerDirective('r-arr', (el: HTMLElement, expr: string, scope: ReactiveObject
         prevKeySet = currKeySet;
 
         // 更新元素内容
-        el.textContent = '';
+        el.textContent = "";
         el.appendChild(fragment);
     };
 
@@ -138,20 +128,18 @@ registerDirective('r-arr', (el: HTMLElement, expr: string, scope: ReactiveObject
     try {
         update();
     } catch (initErr) {
-        console.error('[r-arr] 初始化错误:', (initErr as Error).message);
-        el.textContent = '';
+        console.error("[r-arr] 初始化错误:", (initErr as Error).message);
+        el.textContent = "";
     } finally {
         activeFns.pop();
     }
 
     // 自动清理
-    const cleanArr = (): void => {
+    watchElementRemove(el, () => {
         nodeCache.clear();
         prevKeySet.clear();
         (el as unknown as Record<string, unknown>).__arrProcessed = false;
-        el.removeEventListener('beforeunload', cleanArr);
-    };
-    el.addEventListener('beforeunload', cleanArr);
+    });
 
     // 依赖订阅
     const depSet = elDeps.get(el) || new Set<string>();

@@ -3,6 +3,7 @@ import { componentInstances, componentTemplates, depsMap, elDeps } from "../util
 import { VARIABLE_REGEX } from "../utils/constants.ts";
 import { expressionParser } from "../core";
 import { registerDirective } from "./registry.ts";
+import { initDir, watchElementRemove } from "../utils/directive.ts";
 
 /** 最大重试次数 */
 const MAX_RETRY_COUNT = 5;
@@ -20,8 +21,7 @@ const RETRY_INTERVAL = 16;
  * - 依赖变化时防抖重新渲染（约 16ms）
  */
 registerDirective("r-dom", (el: HTMLElement, compName: string, scope: ReactiveObject, deps: Set<string>): void => {
-    if ((el as unknown as Record<string, unknown>).__domProcessed) return;
-    (el as unknown as Record<string, unknown>).__domProcessed = true;
+    if (!initDir(el, compName, scope, "r-dom", "rDom")) return;
 
     // 去除组件名首尾空格
     const compNameTrimmed = compName.trim();
@@ -147,7 +147,7 @@ registerDirective("r-dom", (el: HTMLElement, compName: string, scope: ReactiveOb
     allDeps.forEach(varName => depsMap.get(scope)?.subscribe(handleDependencyChange, varName));
 
     // 自动清理
-    const cleanup = (): void => {
+    watchElementRemove(el, () => {
         if (retryTimer) {
             clearInterval(retryTimer);
             retryTimer = null;
@@ -170,9 +170,5 @@ registerDirective("r-dom", (el: HTMLElement, compName: string, scope: ReactiveOb
         // 移除元素处理标记
         componentInstances.delete(el);
         (el as unknown as Record<string, unknown>).__domProcessed = false;
-        el.removeEventListener("beforeunload", cleanup);
-    };
-
-    // 监听元素卸载事件
-    el.addEventListener("beforeunload", cleanup);
+    });
 });

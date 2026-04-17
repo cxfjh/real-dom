@@ -37,6 +37,7 @@ export const router: Router = {
 
     /**
      * 解析当前 URL 中的 path 参数
+     *
      * @returns 路径字符串，无 path 参数时返回空字符串
      */
     _parsePath(): string {
@@ -103,7 +104,7 @@ export const router: Router = {
 
         // 路由激活样式
         document.querySelectorAll("[route-active]").forEach(el => {
-            const value = el.getAttribute('route-active') || "r-active";
+            const value = el.getAttribute("route-active") || "r-active";
             const elPath = el.getAttribute("r-route");
             el.classList.remove(value);
             if (elPath === path) el.classList.add(value);
@@ -132,6 +133,7 @@ export const router: Router = {
 
     /**
      * 渲染单个路由页面
+     *
      * @param path - 路由路径
      * @param targetName - 目标容器名
      */
@@ -187,10 +189,6 @@ export const router: Router = {
 
     /**
      * 收集所有 [r-page] 元素的内容并从 DOM 中移除
-     * @remarks
-     * - 通过 `r-page` 属性获取页面名
-     * - 通过 `&route` 属性指定目标容器（默认 "view"）
-     * - 自动为每个页面注册空路由
      */
     _collectAndRemoveOriginalPages(): void {
         document.querySelectorAll("[r-page]").forEach(pageElement => {

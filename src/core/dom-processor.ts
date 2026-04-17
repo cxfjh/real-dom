@@ -34,6 +34,7 @@ export const createUpdateFn = (el: HTMLElement, scope: ReactiveObject = {} as Re
     if (el.attributes) {
         for (let i = 0; i < el.attributes.length; i++) {
             const attr = el.attributes[i];
+            expressionParser.parseText(attr.value, scope, deps!);
             if (directives.has(attr.name)) attrMap.directives.push({ name: attr.name, value: attr.value });
             else if (INTERPOLATION_REGEX.test(attr.value)) attrMap.interpolations.push({ name: attr.name, value: attr.value });
         }

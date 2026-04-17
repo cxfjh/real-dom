@@ -1,8 +1,8 @@
 import type { ReactiveObject } from "../types";
-import { activeFns, elDeps, depsMap } from '../utils/shared.ts';
-import { expressionParser } from "../core";
-import { processElement } from "../core";
-import { registerDirective } from './registry.ts';
+import { activeFns, depsMap, elDeps } from "../utils/shared.ts";
+import { expressionParser, processElement } from "../core";
+import { registerDirective } from "./registry.ts";
+import { initDir, watchElementRemove } from "../utils/directive.ts";
 
 /**
  * 注册 r-for 指令
@@ -13,23 +13,20 @@ import { registerDirective } from './registry.ts';
  * - 支持节点缓存复用，提升列表更新性能
  * - 自动清理过期节点缓存，防止内存泄漏
  */
-registerDirective('r-for', (el: HTMLElement, expr: string, scope: ReactiveObject, deps: Set<string>): void => {
-    if (expr.trim() === '') return void console.warn('[r-for] 循环表达式不能为空');
-    if (!scope || typeof scope !== 'object') return void console.warn('[r-for] 作用域无效');
-    if ((el as unknown as Record<string, unknown>).__forProcessed) return;
-    (el as unknown as Record<string, unknown>).__forProcessed = true;
+registerDirective("r-for", (el: HTMLElement, expr: string, scope: ReactiveObject, deps: Set<string>): void => {
+    if (!initDir(el, expr, scope, "r-for", "rFor")) return;
 
     // 获取循环模板
     const itemTemplate = el.innerHTML.trim();
-    if (!itemTemplate) return void console.warn('[r-for] 循环模板不能为空');
+    if (!itemTemplate) return void console.warn("[r-for] 循环模板不能为空");
 
     // 获取索引变量名
-    const indexKey = el.getAttribute('index') || 'index';
+    const indexKey = el.getAttribute("index") || "index";
 
     // 缓存基础属性（排除指令相关）
     const baseAttrs: Record<string, string> = {};
     Array.from(el.attributes).forEach(attr => {
-        if (['r-for', 'index', 'class', 'style'].includes(attr.name)) return;
+        if (["r-for", "index", "class", "style"].includes(attr.name)) return;
         baseAttrs[attr.name] = expressionParser.parseText(attr.value.trim(), scope, deps);
     });
 
@@ -38,7 +35,7 @@ registerDirective('r-for', (el: HTMLElement, expr: string, scope: ReactiveObject
     const baseStyle = el.style.cssText.trim();
 
     // 节点缓存
-    const nodeCache = new Map<number, { nodes: Node[]; itemScope: ReactiveObject }>();
+    const nodeCache = new Map<number, {nodes: Node[]; itemScope: ReactiveObject}>();
     let prevKeys = new Set<number>();
 
     // 核心更新函数
@@ -50,7 +47,7 @@ registerDirective('r-for', (el: HTMLElement, expr: string, scope: ReactiveObject
             const parsedCount = expressionParser.parse(expr.trim(), scope, deps);
             count = Math.max(0, parseInt(String(parsedCount), 10) || 0);
         } catch (parseErr) {
-            console.error('[r-for] 解析错误:', { expr: expr.trim(), error: (parseErr as Error).message });
+            console.error("[r-for] 解析错误:", { expr: expr.trim(), error: (parseErr as Error).message });
             count = 0;
         }
 
@@ -84,7 +81,7 @@ registerDirective('r-for', (el: HTMLElement, expr: string, scope: ReactiveObject
                 nodesToAdd = reuseFragment;
             } else {
                 // 创建新节点
-                const tempContainer = document.createElement('div');
+                const tempContainer = document.createElement("div");
                 if (baseClass) tempContainer.className = baseClass;
                 if (baseStyle) tempContainer.style.cssText = baseStyle;
                 Object.entries(baseAttrs).forEach(([name, value]) => tempContainer.setAttribute(name, value));
@@ -108,28 +105,28 @@ registerDirective('r-for', (el: HTMLElement, expr: string, scope: ReactiveObject
         prevKeys.forEach(key => !currKeySet.has(key) && nodeCache.delete(key));
         prevKeys = currKeySet;
 
-        el.textContent = '';
+        el.textContent = "";
         el.appendChild(fragment);
     };
 
+    // 注册更新函数
     activeFns.push(update);
     try {
         update();
     } catch (initErr) {
-        console.error('[r-for] 初始化错误:', (initErr as Error).message);
-        el.textContent = '';
+        console.error("[r-for] 初始化错误:", (initErr as Error).message);
+        el.textContent = "";
     } finally {
         activeFns.pop();
     }
 
     // 自动清理
-    const cleanFor = (): void => {
+    watchElementRemove(el, () => {
+        console.log(1);
         nodeCache.clear();
         prevKeys.clear();
         (el as unknown as Record<string, unknown>).__forProcessed = false;
-        el.removeEventListener('beforeunload', cleanFor);
-    };
-    el.addEventListener('beforeunload', cleanFor);
+    });
 
     // 依赖订阅
     const depSet = elDeps.get(el) || new Set<string>();

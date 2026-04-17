@@ -4,6 +4,8 @@ import { activeFns, depsMap } from "../utils/shared.ts";
 import { expressionParser } from "../core";
 import { registerDirective } from "./registry.ts";
 
+import { watchElementRemove } from "../utils/directive.ts";
+
 /**
  * 注册 r 指令
  *
@@ -19,7 +21,7 @@ registerDirective("r", (el: HTMLElement, refExpr: string, scope: ReactiveObject,
     let currentRefName: string | null = null;
     let isDynamic = false;
 
-    /** 解析引用名（支持静态字符串和动态插值） */
+    // 解析引用名（支持静态字符串和动态插值）
     const getRefName = (): string | null => {
         let name = refExpr.trim();
         if (INTERPOLATION_REGEX.test(name)) {
@@ -31,7 +33,7 @@ registerDirective("r", (el: HTMLElement, refExpr: string, scope: ReactiveObject,
         }
     };
 
-    /** 更新引用 */
+    // 更新引用
     const updateRef = (): void => {
         // 获取新引用名
         const newName = getRefName();
@@ -65,7 +67,5 @@ registerDirective("r", (el: HTMLElement, refExpr: string, scope: ReactiveObject,
     }
 
     // 自动清理
-    el.addEventListener("beforeunload", () => {
-        if (currentRefName && window.$r[currentRefName] === el) delete window.$r[currentRefName];
-    });
+    watchElementRemove(el, () => (currentRefName && window.$r[currentRefName] === el) && delete window.$r[currentRefName]);
 });

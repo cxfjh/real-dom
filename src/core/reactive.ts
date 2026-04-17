@@ -70,12 +70,20 @@ export const createReactive = (target: unknown): ReactiveObject => {
         Object.setPrototypeOf(arr, arrayProxyProto);
     };
 
-    // 数组类型特殊处理
+    // 对象类型处理：确保所有嵌套对象都被转换为响应式
     if (Array.isArray(rawTarget)) {
         optimizeArray(rawTarget);
         rawTarget.forEach((item: unknown, index: number) => {
             if (typeof item === "object" && item !== null && !(item as ReactiveObject).__isReactive) rawTarget[index] = createReactive(item);
         });
+    } else {
+        // 深度递归处理普通对象的所有属性
+        for (const key in rawTarget) {
+            if (Object.prototype.hasOwnProperty.call(rawTarget, key)) {
+                const value = rawTarget[key];
+                if (typeof value === "object" && value !== null && !(value as ReactiveObject).__isReactive) rawTarget[key] = createReactive(value);
+            }
+        }
     }
 
     // 创建 Proxy

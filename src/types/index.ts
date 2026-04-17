@@ -1,3 +1,5 @@
+import { watch } from "../core";
+
 /**
  * 响应式引用对象
  */
@@ -42,38 +44,24 @@ export interface Dependency {
     /** 关联的 Proxy 代理对象引用 */
     __proxy?: ReactiveObject;
 
-    /**
-     * 添加订阅者
-     *
-     * @param fn - 订阅函数（数据变化时回调）
-     * @param variable - 可选，关联的变量名（支持精准订阅）
-     */
+    /** 添加订阅者 */
     subscribe(fn: Function, variable?: string | null): void;
 
-    /**
-     * 通知订阅者执行更新
-     * @param variable - 可选，指定通知的变量名（精准通知）
-     */
+    /** 通知订阅者执行更新 */
     notify(variable?: string | null): void;
 }
 
 /**
- * 批量更新管理器接口
- *
- * @description 收集更新函数并在下一帧统一执行，减少重复渲染
+ * 批量更新管理器
  */
 export interface BatchUpdater {
-    /** 待执行的更新函数队列（Set 去重） */
+    /** 待执行的更新函数队列 */
     _queue: Set<Function>;
 
     /** 当前是否正在执行更新批次 */
     _isUpdating: boolean;
 
-    /**
-     * 将更新函数添加到队列
-     *
-     * @param fn - 需要延迟执行的更新函数
-     */
+    /** 将更新函数添加到队列 */
     add(fn: Function): void;
 
     /** 调度下一帧执行队列 */
@@ -84,45 +72,21 @@ export interface BatchUpdater {
 }
 
 /**
- * 表达式解析器接口
- *
- * @description 解析模板中的 JS 表达式和插值语法
+ * 表达式解析器
  */
 export interface ExpressionParser {
-    /** 全局变量白名单（不参与依赖收集） */
+    /** 全局变量白名单 */
     _globals: Set<string>;
 
-    /**
-     * 解析单个表达式
-     *
-     * @param expr - 待解析的表达式字符串
-     * @param scope - 作用域对象
-     * @param deps - 依赖收集器
-     * @param unwrapRef - 是否自动解包 Ref 对象，默认 true
-     * @returns 表达式的计算结果
-     */
+    /** 解析单个表达式 */
     parse(expr: string, scope?: ReactiveObject, deps?: Set<string>, unwrapRef?: boolean): unknown;
 
-    /**
-     * 解析包含插值的文本
-     *
-     * @param text - 包含 {{expr}} 插值的文本
-     * @param scope - 作用域对象
-     * @param deps - 依赖收集器
-     * @param unwrapRef - 是否自动解包 Ref 对象，默认 true
-     * @returns 替换插值后的纯文本
-     */
+    /** 解析包含插值的文本 */
     parseText(text: string, scope?: ReactiveObject, deps?: Set<string>, unwrapRef?: boolean): string;
 }
 
 /**
  * 指令处理函数签名
- *
- * @param el - 指令绑定的 DOM 元素
- * @param expr - 指令表达式值
- * @param scope - 当前作用域
- * @param deps - 依赖收集器
- * @returns 可返回 void 或 Promise<void>（支持异步指令）
  */
 export interface DirectiveHandler {
     (el: HTMLElement, expr: string, scope: ReactiveObject, deps: Set<string>): void | Promise<void>;
@@ -130,8 +94,6 @@ export interface DirectiveHandler {
 
 /**
  * 组件配置选项
- *
- * @description 通过 dom() 函数定义组件时传入的配置对象
  */
 export interface ComponentOptions {
     /** 组件 HTML 模板字符串 */
@@ -180,8 +142,6 @@ export interface RoutePageInfo {
 
 /**
  * 路由管理器接口
- *
- * @description 基于 URL Search Params 的 SPA 路由实现
  */
 export interface Router {
     /** 已注册的路由映射表 */
@@ -194,7 +154,7 @@ export interface Router {
     pageContainers: Map<string, RoutePageInfo>;
 
     /** 原始页面元素内容备份 */
-    originalPageElements: Map<string, { html: string; target: string }>;
+    originalPageElements: Map<string, {html: string; target: string}>;
 
     /** 路由目标容器 DOM 引用 */
     routeTargets: Map<string, HTMLElement>;
@@ -202,49 +162,25 @@ export interface Router {
     /** popstate 事件处理器引用（用于清理） */
     _popstateHandler: () => void;
 
-    /**
-     * 注册路由
-     *
-     * @param path - 路由路径标识
-     * @param handler - 路由激活时的处理函数
-     * @param target - 目标容器名，默认 "view"
-     */
+    /** 注册路由 */
     add(path: string, handler: Function, target?: string): void;
 
-    /**
-     * 导航到指定路径
-     *
-     * @param path - 目标路由路径
-     * @param replace - 是否替换当前历史记录，默认 false
-     */
+    /** 导航到指定路径 */
     nav(path: string, replace?: boolean): void;
 
     /** 初始化路由系统 */
     init(): void;
 
-    /**
-     * 解析当前 URL 中的路径参数
-     *
-     * @returns 路径字符串
-     */
+    /** 解析当前 URL 中的路径参数 */
     _parsePath(): string;
 
-    /**
-     * 执行指定路径的路由处理
-     *
-     * @param path - 目标路由路径
-     */
+    /** 执行指定路径的路由处理 */
     _executeRoute(path: string): void;
 
     /** 预渲染所有已注册的路由页面 */
     _prerenderAllPages(): void;
 
-    /**
-     * 渲染单个路由页面
-     *
-     * @param path - 路由路径
-     * @param targetName - 目标容器名
-     */
+    /** 渲染单个路由页面 */
     _renderPage(path: string, targetName: string): void;
 
     /** 收集并移除 DOM 中的原始页面元素 */
@@ -253,7 +189,7 @@ export interface Router {
 
 declare global {
     interface Window {
-        /** 应用根作用域（响应式对象） */
+        /** 应用根作用域 */
         __rootScope: ReactiveObject;
 
         /** 组件重置缓存标记集合 */
@@ -265,45 +201,22 @@ declare global {
         /** DOM 元素引用注册表 */
         $r: Record<string, HTMLElement>;
 
-        /**
-         * 创建响应式引用
-         *
-         * @template T - 引用值类型
-         * @param initialValue - 初始值
-         * @returns Ref 对象
-         */
+        /** 监听响应式数据变化 */
+        watch: typeof watch;
+
+        /** 创建响应式引用*/
         ref: <T>(initialValue: T) => Ref<T>;
 
-        /**
-         * 创建响应式代理对象
-         *
-         * @param target - 目标对象
-         * @returns 响应式代理对象
-         */
+        /** 创建响应式代理对象 */
         reactive: (target: unknown) => ReactiveObject;
 
-        /**
-         * 向根作用域注入数据
-         *
-         * @param key - 数据键名或键值对对象
-         * @param value - 数据值（当 key 为字符串时使用）
-         */
+        /** 向根作用域注入数据 */
         provide: (key: string | Record<string, unknown>, value?: unknown) => void;
 
-        /**
-         * 定义组件
-         *
-         * @param compName - 组件名称
-         * @param options - 组件配置
-         * @returns 组件工厂函数或挂载实例
-         */
+        /** 定义组件 */
         dom: (compName: string, options: ComponentOptions) => unknown;
 
-        /**
-         * 注册挂载完成回调
-         *
-         * @param callback - DOM 初始化完成后执行的回调
-         */
+        /** 注册挂载完成回调 */
         onMounted: (callback: Function) => void;
 
         /** 路由管理器实例 */

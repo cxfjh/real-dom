@@ -15,8 +15,8 @@
 ### 2. 基础示例
 
 ```html
-<h1>基础响应式</h1>
-<p>{{ text }}</p>
+<h1 class="{{ className }}">基础响应式</h1>
+<p style="color: {{ color }}">{{ text }}</p>
 <p>{{ textArr.region }}</p>
 <p>({{ num1 }} + 2) × {{ num2 }} = {{ (num1.value + 2) * num2.value }}</p>
 <p>当前 num2 = {{ num2 }}</p>
@@ -33,6 +33,8 @@
 </div>
 
 <script>
+   const color = ref("red");
+   const className = ref("h1");
    const text = ref("hello world");
    const textArr = reactive({ region: "北京" });
    console.log(text.value, textArr.region);
@@ -123,20 +125,67 @@ provide({ count, user });
 
 **注意：** `r-model` 双向绑定的变量需要通过 `provide()` 注入到根作用域。
 
+#### `watch()` - 监听响应式数据变化
+
+```javascript
+const html = ref("123");
+const obj = reactive({ age: "1" });
+const count = ref(1);
+
+const unwatch1 = watch(() => obj.age, (newVal, oldVal) => {
+    console.log(`新值：${newVal} 旧值：${oldVal}`);
+}, { once: true }); // once 只执行一次
+
+const unwatch2 = watch(() => html.value, (newVal, oldVal) => {
+    console.log(`新值：${newVal} 旧值：${oldVal}`);
+}, { once: true, immediate: true }); // immediate 立即执行
+
+watch(() => count.value, (newVal, oldVal) => {
+    console.log(`新值：${newVal} 旧值：${oldVal}`);
+});
+
+// 调用返回函数销毁监听器
+unwatch1();
+unwatch2();
+```
+
+**特性：**
+- 可以设置 `immediate` 选项，立即执行监听函数
+- 可以设置 `once` 选项，只执行一次监听函数
+
+#### `{{ }}` - 插值表达式
+
+```html
+<h1>{{ count }}</h1>
+<span style="color: {{ color }}">span</span>
+<div class="{{ className }}"></div>
+
+<script>
+    const count = ref(0);
+    const color = ref("red");
+    const className = ref("div1");
+</script>
+```
+
+**特性：**
+- 支持逻辑运算、三元表达式、原生 JS 代码
+- 插值表达式中进行运算时，必须使用 .value 获取真实值。
+- 支持动态 style 属性和 class 类名和一些其他的属性
+
 ### 指令系统
 
 #### 指令概览
 
-| 指令        | 作用          | 示例                                            |
-|-----------|-------------|-----------------------------------------------|
-| `r-if`    | 条件渲染        | `<div r-if="isVisible">显示</div>`              |
-| `r-click` | 事件绑定        | `<button r-click="handleClick">点击</button>`     |
-| `r-model` | 双向数据绑定      | `<input r-model="username">`                    |
-| `r-for`   | 数字循环渲染      | `<div r-for="5">第{{ index }}项</div>`          |
-| `r-arr`   | 数组循环渲染      | `<div r-arr="list">值：{{ value }}</div>`       |
-| `r-api`   | 异步数据加载      | `<div r-api="/api/data">...</div>`              |
-| `r-cp`    | 组件引用        | `<div r-cp="user-card"></div>`                  |
-| `r`       | DOM 元素引用    | `<div r="container">容器</div>`                 |
+| 指令        | 作用       | 示例                                          |
+|-----------|----------|---------------------------------------------|
+| `r-if`    | 条件渲染     | `<div r-if="isVisible">显示</div>`            |
+| `r-click` | 事件绑定     | `<button r-click="handleClick">点击</button>` |
+| `r-model` | 双向数据绑定   | `<input r-model="username">`                |
+| `r-for`   | 数字循环渲染   | `<div r-for="5">第{{ index }}项</div>`        |
+| `r-arr`   | 数组循环渲染   | `<div r-arr="list">值：{{ value }}</div>`     |
+| `r-api`   | 异步数据加载   | `<div r-api="/api/data">...</div>`          |
+| `r-cp`    | 组件引用     | `<div r-cp="user-card"></div>`              |
+| `r`       | DOM 元素引用 | `<div r="container">容器</div>`               |
 
 #### 指令详细说明
 
@@ -229,11 +278,11 @@ provide({ count, user });
 ```html
 <h1>r-api 网络请求</h1>
 
-<ul r-api="https://xx.cxfjh.cn/api/{{ms}}">
+<ul r-api="{{ 'https://xx.cxfjh.cn/api/' + ms.value }}">
    <li>{{ value.content }} · {{ value.date }}</li>
 </ul>
 
-<div r-api="https://xx.cxfjh.cn/api/messages" hdr="hdr" meth="POST" data-body="dataBody"></div>
+<div r-api="https://xx.cxfjh.cn/api/messages" hdr="hdr" meth="{{md}}" data-body="dataBody"></div>
 
 <ul r-api="https://xx.cxfjh.cn/api/messages" aw arr="list" refr="#refreshBtn">
    <li r-if="_aw" r-arr="list">
@@ -245,6 +294,7 @@ provide({ count, user });
 
 <script>
    const ms = ref("messages");
+   const md = ref("post");
    const dataBody = ref({ content: "hello RealDom" });
    const hdr = {
       "Authorization": "Bearer token123",
