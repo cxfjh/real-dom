@@ -122,7 +122,6 @@ registerDirective("r-for", (el: HTMLElement, expr: string, scope: ReactiveObject
 
     // 自动清理
     watchElementRemove(el, () => {
-        console.log(1);
         nodeCache.clear();
         prevKeys.clear();
         (el as unknown as Record<string, unknown>).__forProcessed = false;

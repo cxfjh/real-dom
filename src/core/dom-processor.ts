@@ -119,7 +119,7 @@ export const processTextNode = (node: Text, scope: ReactiveObject): void => {
  * @param scope - 当前作用域对象
  */
 export const processElement = (el: HTMLElement | DocumentFragment, scope: ReactiveObject = {} as ReactiveObject): void => {
-    if (!el || (el as unknown as Record<string, unknown>).__processedcessed) return;
+    if (!el || (el as unknown as Record<string, unknown>).__processed) return;
     (el as unknown as Record<string, unknown>).__processed = true;
 
     const nodeType = el.nodeType;
