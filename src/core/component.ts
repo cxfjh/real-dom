@@ -1,4 +1,4 @@
-import type { ComponentOptions, ReactiveObject } from "../types";
+import type { ComponentOptions } from "../types";
 import { componentInstances, componentTemplates } from "../utils/shared.ts";
 import { addScopeToDOM, addStyleScope } from "../utils/style.ts";
 import { processElement } from "./dom-processor.ts";
@@ -80,21 +80,26 @@ export const createComponent: (compName: string, options: ComponentOptions) => u
         // 确定最终的样式隔离设置
         const finalIsolation = isolationOverride !== undefined ? isolationOverride : sty;
 
+        // 创建原始refs对象（非响应式）
+        const rawRefs = Object.create(null);
+
         // 创建组件响应式作用域
         const componentScope = window.reactive({
             $compName: compName,
             $compId: compId,
             $scopedId: scopedId,
             $pro: resolvedPro,
-            $refs: Object.create(null),
             $sty: finalIsolation,
         });
+
+        // 将原始refs对象添加到组件作用域
+        (componentScope as any).$refs = rawRefs;
 
         // 执行脚本工厂函数
         let scriptResult: Record<string, unknown> = Object.create(null);
         if (typeof script === "function") {
             try {
-                scriptResult = (script as Function)({ $pro: componentScope.$pro, $refs: (componentScope.$refs as ReactiveObject).__raw, $sty: finalIsolation }, utils,) || {};
+                scriptResult = (script as Function)({ $pro: componentScope.$pro, $refs: rawRefs, $sty: finalIsolation }, utils,) || {};
             } catch (e) {
                 console.error(`[dom] 组件 "${ compName }" 脚本执行错误:`, e);
             }
@@ -160,7 +165,7 @@ export const createComponent: (compName: string, options: ComponentOptions) => u
             const refElements = templateClone.querySelectorAll("[ref]");
             refElements.forEach(el => {
                 const refName = el.getAttribute("ref");
-                if (refName && !(componentScope.$refs as unknown as Record<string, unknown>)[refName]) (componentScope.$refs as unknown as Record<string, unknown>)[refName] = el;
+                if (refName && !rawRefs[refName]) rawRefs[refName] = el;
             });
 
             // 处理模板元素
@@ -187,12 +192,17 @@ export const createComponent: (compName: string, options: ComponentOptions) => u
                  * @param removeSty - 是否同时移除样式元素
                  */
                 del: (removeSty?: boolean) => {
+                    //  执行卸载生命周期钩子
                     if (lifecycleHooks.unmounted) lifecycleHooks.unmounted.call(componentScope);
-                    mountTargetEl.textContent = "";
+                    mountTargetEl.textContent = ""; // 清理 DOM 内容
+
+                    // 移除样式元素
                     if (styleElement && removeSty) {
                         styleElement.remove();
                         styleElement = null;
                     }
+
+                    // 从实例映射中删除
                     componentInstances.delete(mountTargetEl);
                 },
 

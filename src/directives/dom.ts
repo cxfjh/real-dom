@@ -167,8 +167,8 @@ registerDirective("r-dom", (el: HTMLElement, compName: string, scope: ReactiveOb
             componentInstance = null;
         }
 
-        // 移除元素处理标记
         componentInstances.delete(el);
         (el as unknown as Record<string, unknown>).__domProcessed = false;
+        allDeps.forEach(varName => depsMap.get(scope)?.unsubscribe(handleDependencyChange, varName));
     });
 });

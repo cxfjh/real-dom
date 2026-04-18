@@ -67,5 +67,12 @@ registerDirective("r", (el: HTMLElement, refExpr: string, scope: ReactiveObject,
     }
 
     // 自动清理
-    watchElementRemove(el, () => (currentRefName && window.$r[currentRefName] === el) && delete window.$r[currentRefName]);
+    watchElementRemove(el, () => {
+        (currentRefName && window.$r[currentRefName] === el) && delete window.$r[currentRefName];
+        if (isDynamic) {
+            const dependencies = new Set<string>();
+            expressionParser.parseText(refExpr, scope, dependencies);
+            dependencies.forEach(varName => depsMap.get(scope)?.unsubscribe(updateRef, varName));
+        }
+    });
 });

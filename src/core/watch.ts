@@ -14,10 +14,11 @@ export const watch = <T>(
     // 初始化 oldValue 为 undefined
     let oldValue: T | undefined = undefined;
     let isWatching = true;
+    let cleanupScheduled = false;
 
     // 监听函数
     const runner = (): void => {
-        if (!isWatching) return;
+        if (!isWatching || cleanupScheduled) return;
 
         // 收集依赖
         activeFns.push(runner);
@@ -29,27 +30,49 @@ export const watch = <T>(
             if (!Object.is(newValue, oldValue)) {
                 callback(newValue, oldValue);
                 oldValue = newValue;
-                if (options.once) isWatching = false; // 如果 once 为 true，关闭监听
+                if (options.once) {
+                    isWatching = false;
+                    cleanupScheduled = true;
+                }
             }
-        } finally {
-            activeFns.pop();
+        } catch (error) {
+            console.error("监听器回调函数执行时发生错误:", error);
+            const index = activeFns.indexOf(runner);
+            if (index > -1) activeFns.splice(index, 1);
         }
     };
 
     // 立即执行一次
-    if (options.immediate) runner();
-    else {
+    if (options.immediate) {
+        activeFns.push(runner);
+        try {
+            runner();
+        } catch (error) {
+            console.error("立即执行 watch 函数时发生错误:", error);
+        } finally {
+            const index = activeFns.indexOf(runner);
+            if (index > -1) activeFns.splice(index, 1);
+        }
+    } else {
         activeFns.push(runner);
         try {
             oldValue = source();
+        } catch (error) {
+            console.error("获取 watch 函数初始值时发生错误:", error);
         } finally {
-            activeFns.pop();
+            const index = activeFns.indexOf(runner);
+            if (index > -1) activeFns.splice(index, 1);
         }
     }
 
     // 关闭监听
     return () => {
-        isWatching = false;
-        oldValue = undefined;
+        if (!cleanupScheduled) {
+            isWatching = false;
+            oldValue = undefined;
+            cleanupScheduled = true;
+            const index = activeFns.indexOf(runner);
+            if (index > -1) activeFns.splice(index, 1);
+        }
     };
 };

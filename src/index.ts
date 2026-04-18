@@ -42,21 +42,20 @@ window.dom = (compName: string, options: ComponentOptions): unknown => createCom
  *
  * @param callback - DOM 初始化完成后执行的回调
  */
-window.onMounted = function (callback: Function): void {
+window.onMounted = (callback: Function): void => {
     if (typeof callback === "function") mountedCallbacks.push(callback);
     else console.warn("onMounted 只接受函数作为参数。");
 };
-
 
 /**
  * DOMContentLoaded 事件处理：启动应用
  */
 document.addEventListener("DOMContentLoaded", (): void => {
-    // 收集空 src 的 script 标签代码
-    document.querySelectorAll("script[src=\"\"]").forEach(scriptEl => {
-        inlineScripts.push(scriptEl.textContent!.trim());
-        scriptEl.remove();
-    });
+    // 获取应用根元素并创建根作用域
+    const appEl = document.querySelector("[r-app]");
+    const appRoot = appEl || document.body;
+    const rootScope = createReactive({});
+    window.__rootScope = rootScope;
 
     // 初始化 r-cp 组件模板
     document.querySelectorAll("template[r-cp]").forEach((tplEl: Element) => {
@@ -74,15 +73,15 @@ document.addEventListener("DOMContentLoaded", (): void => {
         templateEl.style.display = "none";
     });
 
-    // 获取应用根元素并创建根作用域
-    const appEl = document.querySelector("[r-app]");
-    const appRoot = appEl || document.body;
-    const rootScope = createReactive({});
-    window.__rootScope = rootScope;
-
     // 注入 provide 数据
     pendingProviders.forEach(([key, value]) => (rootScope as Record<string, unknown>)[key] = value);
     pendingProviders.length = 0;
+
+    // 收集空 src 的 script 标签代码
+    document.querySelectorAll("script[src=\"\"]").forEach(scriptEl => {
+        inlineScripts.push(scriptEl.textContent!.trim());
+        scriptEl.remove();
+    });
 
     // 处理根元素的响应式绑定
     processElement(appRoot as HTMLElement, rootScope);

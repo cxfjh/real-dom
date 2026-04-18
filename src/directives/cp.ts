@@ -66,5 +66,7 @@ registerDirective("r-cp", (el: HTMLElement, compName: string, scope: ReactiveObj
     watchElementRemove(el, () => {
         componentInstances.delete(el);
         (el as unknown as Record<string, unknown>).__cpProcessed = false;
+        const depSet = elDeps.get(el);
+        if (depSet) depSet.forEach(varName => depsMap.get(scope)?.unsubscribe(renderComponent, varName));
     });
 });

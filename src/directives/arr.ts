@@ -136,9 +136,15 @@ registerDirective("r-arr", (el: HTMLElement, expr: string, scope: ReactiveObject
 
     // 自动清理
     watchElementRemove(el, () => {
+        for (const [_, cacheEntry] of nodeCache) {
+            cacheEntry.nodes.forEach(node => (node.parentNode) && node.parentNode.removeChild(node));
+            if (typeof (cacheEntry.itemScope as any).destroy === 'function') (cacheEntry.itemScope as any).destroy();
+        }
         nodeCache.clear();
         prevKeySet.clear();
         (el as unknown as Record<string, unknown>).__arrProcessed = false;
+        const depSet = elDeps.get(el);
+        if (depSet) depSet.forEach(varName => depsMap.get(scope)?.unsubscribe(update, varName));
     });
 
     // 依赖订阅

@@ -47,6 +47,9 @@ export interface Dependency {
     /** 添加订阅者 */
     subscribe(fn: Function, variable?: string | null): void;
 
+    /** 移除订阅者 */
+    unsubscribe(fn: Function, variable?: string | null): void;
+
     /** 通知订阅者执行更新 */
     notify(variable?: string | null): void;
 }

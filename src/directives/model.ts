@@ -1,5 +1,5 @@
 import type { ReactiveObject } from "../types";
-import { activeFns } from "../utils/shared.ts";
+import { activeFns, depsMap, elDeps } from "../utils/shared.ts";
 import { registerDirective } from "./registry.ts";
 
 import { watchElementRemove } from "../utils/directive.ts";
@@ -139,5 +139,7 @@ registerDirective("r-model", (el: HTMLElement, path: string, scope: ReactiveObje
             el.removeEventListener(elAny.__modelEventType as string, elAny.__modelHandler as EventListener);
             elAny.__modelHandler = null;
         }
+        const depSet = elDeps.get(el);
+        if (depSet) depSet.forEach(varName => depsMap.get(scope)?.unsubscribe(updateView, varName));
     });
 });

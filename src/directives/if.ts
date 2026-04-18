@@ -1,5 +1,5 @@
 import type { ReactiveObject } from "../types";
-import { activeFns } from "../utils/shared.ts";
+import { activeFns, depsMap, elDeps } from "../utils/shared.ts";
 import { expressionParser } from "../core";
 import { registerDirective } from "./registry.ts";
 import { initDir, watchElementRemove } from "../utils/directive.ts";
@@ -60,5 +60,9 @@ registerDirective("r-if", (el: HTMLElement, expr: string, scope: ReactiveObject,
     }
 
     // 自动清理
-    watchElementRemove(el, () => (el as unknown as Record<string, unknown>).__ifProcessed = false);
+    watchElementRemove(el, () => {
+        (el as unknown as Record<string, unknown>).__ifProcessed = false;
+        const depSet = elDeps.get(el);
+        if (depSet) depSet.forEach(varName => depsMap.get(scope)?.unsubscribe(update, varName));
+    });
 });

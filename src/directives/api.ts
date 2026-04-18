@@ -1,5 +1,5 @@
 import type { ReactiveObject } from "../types";
-import { activeFns } from "../utils/shared.ts";
+import { activeFns, depsMap, elDeps } from "../utils/shared.ts";
 import { expressionParser, processElement } from "../core";
 import { registerDirective } from "./registry.ts";
 import { initDir, watchElementRemove } from "../utils/directive.ts";
@@ -223,4 +223,11 @@ registerDirective("r-api", async (el: HTMLElement, expr: string, scope: Reactive
     } finally {
         activeFns.pop();
     }
+
+    // 自动清理
+    watchElementRemove(el, () => {
+        nodeCache.clear();
+        const depSet = elDeps.get(el);
+        if (depSet) depSet.forEach(varName => depsMap.get(scope)?.unsubscribe(fetchAndRender, varName));
+    });
 });
