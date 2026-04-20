@@ -4,6 +4,29 @@ import { registerDirective } from "./registry.ts";
 import { initDir, watchElementRemove } from "../utils/directive.ts";
 
 /**
+ * 递归向上查找父节点中是否有 r-data 指令
+ * @param element - 起始元素
+ * @returns 找到的具有 r-data 指令的父元素，如果没有则返回 null
+ */
+/**
+ * 向上查找最近带有 r-data 属性的祖先节点，最多到 body 节点
+ * @param element 起始元素
+ * @returns 找到的节点 / null
+ */
+const findParentWithRData = (element: HTMLElement | null): HTMLElement | null => {
+    let current = element;
+
+    while (current && current !== document.body) {
+        if (current.hasAttribute("r-data")) return current;
+        current = current.parentElement;
+    }
+
+    // 最后检查一下 body 自身是否有 r-data
+    if (current === document.body && current.hasAttribute("r-data")) return current;
+    return null;
+};
+
+/**
  * 注册 r-click 指令
  *
  * @remarks
@@ -47,14 +70,18 @@ registerDirective("r-click", (el: HTMLElement, code: string, scope: ReactiveObje
     let clickFn: Function;
 
     // 编译事件处理函数
-    try {
-        clickFn = new Function(...validKeys, `"use strict";${ code }`);
-        elAny.__clickFn = clickFn;
-        elAny.__clickCode = code;
-    } catch (err) {
-        console.error(`[r-click] ${ eventType } 编译错误:`, (err as Error).message);
-        return;
-    }
+    setTimeout(() => {
+        try {
+            const rData = findParentWithRData(el);
+            if (rData) clickFn = (...args: any) => new Function(...validKeys, '_', `'use strict'; ${code}`)(...args, (rData as any).__dataScope);
+            else clickFn = new Function(...validKeys, `"use strict"; ${ code }`);
+            elAny.__clickFn = clickFn;
+            elAny.__clickCode = code;
+        } catch (err) {
+            console.error(`[r-click] ${ eventType } 编译错误:`, (err as Error).message);
+            return;
+        }
+    });
 
     // 事件处理器
     const eventHandler = (event: Event): void => {

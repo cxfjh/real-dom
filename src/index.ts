@@ -51,6 +51,10 @@ window.onMounted = (callback: Function): void => {
  * DOMContentLoaded 事件处理：启动应用
  */
 document.addEventListener("DOMContentLoaded", (): void => {
+    const style = document.createElement('style');
+    style.innerHTML = `.__real_dom_r-if-hidden{display: none;}`;
+    document.head.appendChild(style);
+
     // 获取应用根元素并创建根作用域
     const appEl = document.querySelector("[r-app]");
     const appRoot = appEl || document.body;

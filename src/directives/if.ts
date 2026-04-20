@@ -45,7 +45,10 @@ registerDirective("r-if", (el: HTMLElement, expr: string, scope: ReactiveObject,
         // 更新显示状态
         prevShow = show;
         isFirstRender = false;
-        el.style.display = show ? ((el as unknown as Record<string, unknown>).__ifInitialDisplay as string) : "none";
+
+        // 使用 CSS 类来控制显示/隐藏，避免被样式属性覆盖
+        if (show) el.classList.remove("__real_dom_r-if-hidden");
+        else el.classList.add("__real_dom_r-if-hidden");
     };
 
     // 注册更新函数

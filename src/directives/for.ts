@@ -23,7 +23,7 @@ registerDirective("r-for", (el: HTMLElement, expr: string, scope: ReactiveObject
     // 获取索引变量名
     const indexKey = el.getAttribute("index") || "index";
 
-    // 缓存基础属性（排除指令相关）
+    // 缓存基础属性
     const baseAttrs: Record<string, string> = {};
     Array.from(el.attributes).forEach(attr => {
         if (["r-for", "index", "class", "style"].includes(attr.name)) return;
@@ -70,11 +70,8 @@ registerDirective("r-for", (el: HTMLElement, expr: string, scope: ReactiveObject
 
                 // 复用节点
                 const reuseFragment = document.createDocumentFragment();
-                nodes.forEach(node => {
-                    (node as unknown as Record<string, unknown>).__processed = false;
-                    if ((node as HTMLElement).children) Array.from((node as HTMLElement).children).forEach((child) => ((child as unknown as Record<string, unknown>).__processed = false),);
-                    reuseFragment.appendChild(node);
-                });
+                nodes.forEach(node => ((node as any).__processed = false));
+                reuseFragment.append(...nodes); // 批量添加
 
                 // 处理复用的节点
                 processElement(reuseFragment as unknown as HTMLElement, itemScope);
@@ -102,7 +99,7 @@ registerDirective("r-for", (el: HTMLElement, expr: string, scope: ReactiveObject
         });
 
         // 清理过期节点
-        prevKeys.forEach(key => !currKeySet.has(key) && nodeCache.delete(key));
+        for (const key of prevKeys) !currKeySet.has(key) && nodeCache.delete(key);
         prevKeys = currKeySet;
 
         el.textContent = "";

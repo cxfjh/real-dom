@@ -13,6 +13,7 @@ import "./cp.ts";
 import "./dom.ts";
 import "./route.ts";
 import "./ref.ts";
+import "./data.ts";
 
 /* 导出注册 API 供外部扩展 */
 export { registerDirective } from "./registry.ts";

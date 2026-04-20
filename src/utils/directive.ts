@@ -50,9 +50,9 @@ export const watchElementRemove = (el: HTMLElement, cleanup: () => void) => {
         }
     });
 
-    // 开始监听父节点的子节点变化
-    observer.observe(el.parentElement || document.body, {
+    // 观察整个文档，以便捕获任何可能导致元素被移除的变化
+    observer.observe(document, {
         childList: true, // 子节点增删
-        subtree: false
+        subtree: true   // 观察整个子树
     });
 };
