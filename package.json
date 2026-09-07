@@ -1,18 +1,48 @@
 {
-  "name": "realdom",
-  "private": true,
+  "name": "@cxfjh/realdom",
+  "private": false,
   "version": "0.1.0",
   "type": "module",
+  "description": "轻量级零依赖的响应式 DOM 框架，内置路由系统，压缩后仅 11KB",
+  "keywords": [
+    "dom-framework",
+    "reactive",
+    "data-binding",
+    "spa-framework",
+    "zero-dependency",
+    "lightweight-framework",
+    "template-engine",
+    "component-framework",
+    "javascript-framework",
+    "frontend-framework",
+    "dom-manipulation",
+    "proxy-based",
+    "vanilla-js",
+    "no-build-tools",
+    "responsive-dom"
+  ],
+  "author": "cxfjh[2449579731@qq.com]",
+  "license": "MIT",
+  "module": "./dist/es.0.1.0.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "import": "./dist/es.0.1.0.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview"
   },
   "devDependencies": {
-    "@types/node": "^25.9.3",
-    "terser": "^5.48.0",
-    "typescript": "~6.0.2",
+    "@types/node": "^25.9.5",
+    "typescript": "^6.0.3",
     "vite": "8.0.5",
-    "vite-plugin-dts": "^4.5.4"
+    "vite-plugin-dts": "^5.1.0"
   }
 }

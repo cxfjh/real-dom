@@ -30,12 +30,12 @@ regDir("r-api", async (el: HTMLElement, expr: string, scope: ReactiveInterface, 
     const tplHTML = el.innerHTML;
 
     // 静态配置提取
-    const keyAttr = el.getAttribute("key") || "id";          // 数组项的唯一标识字段, 默认 "id"
+    const keyAttr = el.getAttribute("key") || "id";           // 数组项的唯一标识字段, 默认 "id"
     const valueAttr = el.getAttribute("value") || "value";    // 数据值在作用域中的别名, 默认 "value"
     const indexAttr = el.getAttribute("index") || "index";    // 索引在作用域中的别名, 默认 "index"
-    const listAttr = el.getAttribute("list");                  // 从响应 JSON 中提取列表的路径, 如 "data.items"
-    const arrAttr = el.getAttribute("arr");                    // 数组数据在作用域中的变量名, 如 "users"
-    const manualMode = el.hasAttribute("manual");              // 手动加载模式, 不自动发起请求
+    const listAttr = el.getAttribute("list");             // 从响应 JSON 中提取列表的路径, 如 "data.items"
+    const arrAttr = el.getAttribute("arr");               // 数组数据在作用域中的变量名, 如 "users"
+    const manualMode = el.hasAttribute("manual");           // 手动加载模式, 不自动发起请求
 
     // 动态配置解析
     const parseDynamicConfig = () => ({ refresh: parser.text(el.getAttribute("refresh") || "", scope, deps), });
@@ -337,4 +337,3 @@ const moveChild = (from: Node, to: DocumentFragment): void => {
         child = children[0];
     }
 };
-
