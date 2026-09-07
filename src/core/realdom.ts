@@ -5,6 +5,7 @@ import { regDir } from "../directives";
 import { router } from "../router";
 import { cpInsts, mountCbs, pendProv, rootScope } from "../utils/shared.ts";
 import { initDir, onElRemove } from "../utils/directive.ts";
+import { activeFns } from "../utils/shared.ts";
 
 
 /**
@@ -106,4 +107,9 @@ export class RealDom {
         if (typeof callback === "function") mountCbs.push(callback);
         else console.warn("onMounted 只接受函数作为参数.");
     };
+
+    /**
+     *  活跃的更新函数集合
+     */
+    public static activeFns = activeFns;
 }

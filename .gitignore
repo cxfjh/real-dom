@@ -1,5 +1,4 @@
 node_modules/
 dist/
 .idea/
-docs/index.html
-docs/test.html
+docs/

@@ -6,14 +6,12 @@ import dts from "vite-plugin-dts";
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 
 export default defineConfig({
-    plugins: [dts({ outDir: "dist", entryRoot: "src", rollupTypes: true, insertTypesEntry: true })],
-
+    resolve: { tsconfigPaths: true },
+    plugins: [dts({ entryRoot: "src", insertTypesEntry: true })],
     build: {
         target: "esnext",
-        minify: "terser",
         emptyOutDir: true,
         sourcemap: true,
-
         lib: {
             entry: resolve(__dirname, "src/index.ts"),
             fileName: (format) => {
@@ -24,7 +22,6 @@ export default defineConfig({
             name: "RealDom",
             formats: ["es", "iife"],
         },
-
-        rollupOptions: { output: { exports: "default" } }
+        rolldownOptions: { output: { exports: "default" } },
     },
 });
