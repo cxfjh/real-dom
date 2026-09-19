@@ -38,7 +38,7 @@ document.addEventListener("DOMContentLoaded", (): void => {
     router.init();
 
     // 延迟执行 onMounted 回调
-    setTimeout(() => {
+    requestAnimationFrame(() => {
         // 执行所有通过 RealDom.onMounted() 注册的回调
         mountCbs.forEach(callback => {
             try {

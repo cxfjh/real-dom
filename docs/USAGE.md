@@ -59,6 +59,7 @@
   - [Dep — 依赖管理类](#dep--依赖管理类)
   - [onElRemove — 元素移除监听](#onelremove--元素移除监听)
   - [initDir — 指令初始化工具](#initdir--指令初始化工具)
+  - [activeFns — 活跃的更新函数集合](#activefns--活跃的更新函数集合)
 - [常见问题](#常见问题)
 
 ---
@@ -463,7 +464,7 @@ const instance = UserCard({
 
 > **提示**：`to` 参数格式说明：
 > - `"#user"` — 自动创建 `id="user"` 的元素，挂载到 `<body>`
-> - `"#user,app"` — 自动创建 `id="user"` 的元素，挂载到 `id="app"` 的元素内
+>   - `"#user,app"` — 自动创建 `id="user"` 的元素，挂载到 `id="app"` 的元素内
 > - 使用 `to` 后，`dom()` 返回 `undefined`（已自动挂载，无需手动调用）
 
 #### 销毁组件实例和样式
@@ -1649,6 +1650,24 @@ regDir("r-my-directive", (el, expr, scope, deps) => {
         // 清理资源：取消订阅、移除事件监听等
     });
 });
+```
+
+### activeFns — 活跃的更新函数集合
+
+`activeFns` 是一个全局集合，用于存储当前活跃的更新函数。在模板渲染时，所有响应式数据的更新函数会被添加到这个集合中，确保在数据变化时能够及时通知。
+
+```javascript
+const { activeFns } = RealDom;
+activeFns.push(() => console.log("更新"));
+```
+
+### raf — 异步执行函数
+
+`raf(fn)` 是一个有返回值的异步执行函数，确保在浏览器渲染完成后执行。在需要在 DOM 更新后执行的场景中非常有用。
+
+```javascript
+const { raf } = RealDom;
+const r = await raf(() => console.log("更新"));
 ```
 
 ---

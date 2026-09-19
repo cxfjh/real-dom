@@ -1,6 +1,7 @@
 import { batch, bind, bindText, compile, Dep, parser, watch } from "../core";
-import { initDir, onElRemove } from "../utils/directive.ts";
+import { initDir, onElRemove, raf } from "../utils/directive.ts";
 import { regDir } from "../directives";
+import type { activeFns } from "../utils/shared.ts";
 
 
 /**
@@ -418,6 +419,16 @@ export interface RealDomInterface {
      * Value: 组件实例
      */
     cpInsts: WeakMap<HTMLElement, unknown>;
+
+    /**
+     * 活跃的更新函数集合
+     */
+    activeFns: typeof activeFns;
+
+    /**
+     * 步执行函数, 确保在浏览器渲染完成后执行
+     */
+    raf: typeof raf;
 }
 
 

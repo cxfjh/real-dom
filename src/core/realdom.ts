@@ -4,7 +4,8 @@ import "../directives/index.ts";
 import { regDir } from "../directives";
 import { router } from "../router";
 import { cpInsts, mountCbs, pendProv, rootScope } from "../utils/shared.ts";
-import { initDir, onElRemove } from "../utils/directive.ts";
+import { initDir, onElRemove, raf } from "../utils/directive.ts";
+import { activeFns } from "../utils/shared.ts";
 
 
 /**
@@ -77,6 +78,11 @@ export class RealDom {
     public static get rootScope() { return rootScope; }
 
     /**
+     * 步执行函数, 确保在浏览器渲染完成后执行
+     */
+    public static raf = raf;
+
+    /**
      *  组件实例缓存
      */
     public static cpInsts = cpInsts;
@@ -106,4 +112,9 @@ export class RealDom {
         if (typeof callback === "function") mountCbs.push(callback);
         else console.warn("onMounted 只接受函数作为参数.");
     };
+
+    /**
+     *  活跃的更新函数集合
+     */
+    public static activeFns = activeFns;
 }

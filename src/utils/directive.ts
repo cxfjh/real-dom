@@ -284,3 +284,12 @@ export const observer = new MutationObserver((mutations) => {
     // 批量处理变化的元素, 通过 batch 合并同一帧内的多次变更
     batch.add(() => toProcess.forEach(el => compile(el, rootScope!)));
 });
+
+
+/**
+ * 异步执行函数, 确保在浏览器渲染完成后执行
+ *
+ * @param fn - 要执行的函数
+ * @returns 执行结果
+ */
+export const raf = (fn: any) => new Promise(r => requestAnimationFrame(() => r(fn())));
